@@ -45,3 +45,8 @@ text
 
 下一步计划
 尝试调整 designs/spm/config.tcl 中的 FP_CORE_UTIL 参数，扩大芯片面积，重新跑流程，观察该违例是否消除。
+
+## 修复验证（成功）
+将 `config.json` 中的 `FP_CORE_UTIL` 从 45 调整为 60，扩大核心面积，重新跑 `make test`。
+日志显示：`There are no max slew, max fanout or max capacitance violations`。
+重新运行解析脚本，总扇出违例数为 0，成功修复 CTS 阶段扇出违例。
