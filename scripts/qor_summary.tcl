@@ -26,3 +26,13 @@ foreach key {"wns" "tns" "setup_violations" "hold_violations" "max_fanout_violat
     }
 }
 puts "========================================"
+puts "========================================"
+puts "          物理与功耗指标                "
+puts "========================================"
+foreach key {"DIEAREA_mm^2" "TotalCells" "wire_length" "vias" "power_typical_internal_uW" "power_typical_switching_uW"} {
+    set index [lsearch $headers $key]
+    if {$index != -1} {
+        set val [lindex $values $index]
+        puts [format "%-30s : %s" $key $val]
+    }
+}
