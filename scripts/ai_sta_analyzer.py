@@ -7,7 +7,7 @@ from openai import OpenAI
 api_key = os.getenv("DEEPSEEK_API_KEY")
 
 if not api_key:
-    print("错误：请先设置 DEEPSEEK_API_KEY 环境变量！")
+    print("❌ 错误：请先在终端运行 export DEEPSEEK_API_KEY='你的真实Key'")
     exit(1)
 
 client = OpenAI(
@@ -16,22 +16,33 @@ client = OpenAI(
 )
 
 def analyze_report(file_path):
-    # 2. 智能读取：为了防止报告太大超出大模型的字数限制，我们只读前 150 行
     if not os.path.exists(file_path):
-        print(f"找不到文件: {file_path}")
+        print(f"❌ 找不到文件: {file_path}")
         return
 
+    # 1. 读取全部内容
     with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()[:150]
-        report_content = "".join(lines)
+        all_lines = f.readlines()
 
-    print(f"✅ 成功读取报告 {file_path} 的前 {len(lines)} 行。正在呼叫 AI 工程师...\n")
-    if "VIOLATED" not in report_content.upper():
+    # 2. 智能搜索：找到包含 VIOLATED 的行号
+    violation_indices = [i for i, line in enumerate(all_lines) if "VIOLATED" in line.upper()]
+
+    if not violation_indices:
         print("🎉 报告中没有发现 VIOLATED 违例，无需 AI 深度分析，节省 Token！")
         return
     else:
-        print("⚠️ 检测到违例，正在启动 AI 救火流程...")
-    # 3. 构造 Prompt (提示词)
+        print(f"⚠️ 检测到违例，正在提取前 5 条违例的上下文...")
+        
+        # 3. 提取违例的上下文（每个违例前后各 30 行）
+        extracted_text = ""
+        for idx in violation_indices[:5]: 
+            start = max(0, idx - 30)
+            end = min(len(all_lines), idx + 5)
+            extracted_text += "".join(all_lines[start:end])
+            extracted_text += "\n" + "="*60 + "\n"
+
+        report_content = extracted_text
+
     prompt = f"""
     你现在是一个资深数字IC后端工程师。请阅读以下 STA 报告（OpenROAD生成）。
     你需要完成以下三个任务：
@@ -43,7 +54,6 @@ def analyze_report(file_path):
     {report_content}
     """
  
-    # 4. 调用大模型 API
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -51,35 +61,30 @@ def analyze_report(file_path):
                 {"role": "system", "content": "你是一个精通STA时序分析的专家，回答必须严谨。"},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.1 # 设定低温度，让 AI 回答更严谨、少发散
+            temperature=0.1
         )
         
-        # 5. 提取并打印结果
         result = response.choices[0].message.content
         print("================ AI 分析结果 ================\n")
         print(result)
-        print("\n==============================================")
         
-        # 6. 将结果自动保存为本地文件（这一步很关键！）
+        # 保存结果到当前目录
         with open("ai_analysis_result.md", "w", encoding="utf-8") as f:
             f.write(result)
-        print("📁 结果已自动保存到 ai_analysis_result.md")
+        print("\n📁 结果已自动保存到 ai_analysis_result.md")
         
     except Exception as e:
         print(f"❌ API 调用失败，请检查网络或 API Key: {e}")
 
 if __name__ == "__main__":
-    # 1. 设置命令行参数解析
     parser = argparse.ArgumentParser(description="AI 赋能数字后端：STA 报告智能分析工具")
     parser.add_argument("path", nargs="?", help="指定要分析的 STA 报告路径（可选）")
     args = parser.parse_args()
 
     report_path = args.path
 
-    # 2. 智能逻辑：如果用户没有输入路径，自动在当前目录下搜索 .rpt 文件
     if not report_path:
         print("💡 未指定报告路径，正在当前目录下智能搜索 .rpt 报告...")
-        # 优先找 max.rpt，找不到再找其他 rpt
         rpt_files = glob.glob("./*max*.rpt") + glob.glob("./*.rpt")
         
         if rpt_files:
@@ -89,5 +94,4 @@ if __name__ == "__main__":
             print("❌ 错误：当前目录下没有找到任何 .rpt 报告文件，请通过参数指定路径。")
             exit(1)
     
-    # 3. 运行分析
     analyze_report(report_path)
