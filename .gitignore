@@ -1,0 +1,67 @@
+# ============================================================
+# 数字后端学习仓库 .gitignore
+# 原则：只提交"文本类产物"（笔记/脚本/TB/SDC），
+#       二进制与流程中间文件一律不入库
+# ============================================================
+
+# ---- 版图 / 寄生 / 时序标注（几十 MB，且不可 diff）----
+*.gds
+*.GDS
+*.oas
+*.sdf
+*.spef
+*.def
+*.odb
+*.mag
+*.maglef
+*.lib
+*.db
+*.lef
+
+# ---- 综合 / 布局布线产物目录 ----
+results/
+runs/
+logs/
+tmp/
+signoff/
+reports/final/
+
+# ---- 仿真产物 ----
+work/
+work_gls/
+*.vcd
+*.wlf
+*.fsdb
+transcript
+transcript.*
+*.vvp
+sdf_annotate.log
+gls_run.log
+rtl_run.log
+*_sim.log
+
+# ---- 注意：不要写 "*.v"
+#      本仓库的 tb/*.v 是源码，需要提交；
+#      门级网表（3.8 MB）请放在 D:\IC_project 归档，不要入库
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+
+# ---- 临时文件 ----
+*.tmp
+*.bak
+*.orig
+*.log
+!notes/**/*.log
